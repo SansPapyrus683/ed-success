@@ -13,6 +13,8 @@ output: html_notebook
 * [crime data](https://www.icpsr.umich.edu/web/NACJD/studies/37059/summary#)
 * [FIPS table & stuff](https://github.com/kjhealy/fips-codes/blob/master/state_and_county_fips_master.csv)
 
+note that the csv files we used were slightly modified to remove/include some useless/useful data
+
 ```{r}
 ```
 
