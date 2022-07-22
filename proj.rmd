@@ -9,8 +9,8 @@ output: html_notebook
 ---
 
 * [unemployment data](https://www.bls.gov/lau/)
-* [basically everything else](https://www.census.gov/quickfacts/fact/table/alleghenycountypennsylvania/LND110210#LND110210)
-* [crime data](https://www.icpsr.umich.edu/web/NACJD/studies/37059/summary#)
+* [basically everything else](https://www.openintro.org/data/index.php?data=county_complete)
+* [crime data](https://ucr.fbi.gov/crime-in-the-u.s/2017/crime-in-the-u.s.-2017)
 * [FIPS table & stuff](https://github.com/kjhealy/fips-codes/blob/master/state_and_county_fips_master.csv)
 
 note that the csv files we used were slightly modified to remove/include some useless/useful data
