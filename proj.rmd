@@ -18,7 +18,24 @@ note that the csv files we used were slightly modified to remove/include some us
 ```{r}
 ```
 
-$\text{your mother}$
+output variables (for each county):
+* crime rate
+* income
+* med. income
+
+interesting input variables
+* high school gradu
+
+control input variables (added a buncha controls):
+* population
+* race percentages
+  * black
+  * asian
+  * white
+  * hispanic
+*
+
+note: also check if any of the output variables have some sort of correlation with each other
 ```{r}
 mycars <- within(mtcars, { cyl <- ordered(cyl) })
 mycars

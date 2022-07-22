@@ -43,21 +43,21 @@ crime = crime.loc[~crime.COUNTY.isin(bad)]
 counties = pd.read_csv("data/areas/counties.csv")
 cty_fips = {}
 for _, c in counties.iterrows():
-    name = (c.NAME_CTY
+    name = (c.NAME
             .replace("MUNICIPIO", "")
             .replace("COUNTY", "")
             .replace("PARISH", "")
             .strip())
-    cty_fips[name] = c.FIPS_ST, c.FIPS_CTY
+    cty_fips[name] = c.FIPS_STATE, c.FIPS_COUNTY
 
 exceptions = {
     "WESTCHESTER PUBLIC SAFETY": "WESTCHESTER",
     "SALT LAKE  UNIFIED": "SALT LAKE"
 }
-crime["FIPS_ST"] = crime.COUNTY.apply(
+crime["FIPS_STATE"] = crime.COUNTY.apply(
     lambda c: cty_fips[exceptions.get(strip_digits(c), strip_digits(c))][0]
 )
-crime["FIPS_CTY"] = crime.COUNTY.apply(
+crime["FIPS_COUNTY"] = crime.COUNTY.apply(
     lambda c: cty_fips[exceptions.get(strip_digits(c), strip_digits(c))][1]
 )
 
