@@ -40,7 +40,7 @@ bad = {
 }
 crime = crime.loc[~crime.COUNTY.isin(bad)]
 
-counties = pd.read_csv("data/areas/counties.csv")
+counties = pd.read_csv("data/areas/other17raw.csv")
 cty_fips = {}
 for _, c in counties.iterrows():
     name = (c.NAME
