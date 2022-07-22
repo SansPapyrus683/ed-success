@@ -1,0 +1,11 @@
+---
+title: "EDA"
+authors:
+- Kevin Sheng
+- Arushi Agarwal
+- Peter Kim
+- Nathan Dang
+output: html_notebook
+---
+
+put eda here i guess

@@ -3,7 +3,7 @@ import pathlib
 import pandas as pd
 
 # make sure we in the project directory
-os.chdir(pathlib.Path(__file__).parent.parent.absolute())
+os.chdir(pathlib.Path(__file__).parents[2].absolute())
 print(os.getcwd())
 
 

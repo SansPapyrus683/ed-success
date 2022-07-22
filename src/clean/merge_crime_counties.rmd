@@ -32,7 +32,7 @@ censusdata <- fread("data/counties.csv")
 crimedata <- fread("data/crime/crime17.csv")
 ```
 
-```{r cleaning}
+```{r initial cleaning}
 to_delete <- "(county|census area|borough|municipality)"
 censusdata <- censusdata %>%
         rename(county = name) %>%
@@ -44,7 +44,9 @@ crimedata <- crimedata %>%
         mutate(county = tolower(county),
                state = tolower(state),
                statecounty = paste(state, county))
+```
 
+```{r}
 data <- full_join(censusdata, crimedata, by="statecounty") %>%
         rename(state = state.x, county = county.x) %>%
         select(-c(state.y, county.y, statecounty)) %>%
