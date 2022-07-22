@@ -6,6 +6,11 @@ import pandas as pd
 os.chdir(pathlib.Path(__file__).parent.parent.absolute())
 print(os.getcwd())
 
+
+def strip_digits(s: str) -> str:
+    return "".join(c for c in s if not c.isdigit()).strip()
+
+
 fin = "data/other/other17raw.csv"
 fout = "data/other/other17.csv"
 
@@ -39,5 +44,7 @@ counties.NAME = counties.NAME.apply(
                .strip())
 )
 counties.rename({"STATE": "COUNTY"})
+
+counties.columns = [strip_digits(n).strip("_") for n in counties.columns]
 
 counties.to_csv(fout, index=False)
