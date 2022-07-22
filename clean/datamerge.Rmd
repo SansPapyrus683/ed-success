@@ -24,53 +24,52 @@ options(scipen = 0, digits = 3)  # controls base R output
 if(!require('pacman')) {
   install.packages('pacman')
 }
-pacman::p_load( glmnet, leaps, car, tidyverse, pROC, caret)
-# install a package if it does not exist already and put the package in the path (library)
-# dplyr, ggplot2,tidyr
+pacman::p_load(glmnet, leaps, car, tidyverse, pROC, caret, data.table)
+```
 
-censusdata <- fread("../data/county_complete.csv")
-crimedata <- fread("crime17.csv")
+```{r cleaning}
+censusdata <- fread("data/counties.csv")
+crimedata <- fread("data/crime/crime17.csv")
 
-#making all county names lowercase in both data sets
+# making all county names lowercase in both data sets
 
-#making a copy of censusdata and crimedata
+# making a copy of censusdata and crimedata
 censusdata1 <- data.frame(censusdata)
 crimedata1 <- data.frame(crimedata)
 
-#making all the county names the same and renaming the columns so they are the same
+# making all the county names the same and renaming the columns so they are the same
 censusdata1$name <- tolower(censusdata$name)
-crimedata1$COUNTY <- tolower(crimedata$COUNTY)
-crimedata1 <- rename(crimedata1, county = COUNTY)
+crimedata1$county <- tolower(crimedata$county)
+crimedata1 <- rename(crimedata1)
 censusdata1 <- rename(censusdata1, county = name)
 
-#making all the state names the same and renaming the columns so they are the same
+# making all the state names the same and renaming the columns so they are the same
 censusdata1$state <- tolower(censusdata$state)
-crimedata1$STATE <- tolower(crimedata$STATE)
-crimedata1 <- rename(crimedata1, state = STATE)
+crimedata1$state <- tolower(crimedata$state)
 
-#concatenate state and county columns because there are more than one of the same counties
+# concatenate state and county columns because there are more than one of the same counties
 crimedata1$statecounty <- paste(crimedata1$state, crimedata1$county)
 censusdata1$statecounty <- paste(censusdata1$state, censusdata1$county)
 
-#making a copy of crimedata1 without the unnecessary columns of state and county separately 
+# making a copy of crimedata1 without the unnecessary columns of state and county separately
 crimedata2 <- data.frame(crimedata1)
 crimedata2 <- select(crimedata2, -c('state', 'county'))
 
-#making a copy of censusdata1 without the unnecessary columns of state and county separately 
+# making a copy of censusdata1 without the unnecessary columns of state and county separately
 censusdata2 <- data.frame(censusdata1)
 censusdata2 <- select(censusdata2, -c('state', 'county'))
 
-#getting rid of the word "county" in censusdata1
+# getting rid of the word "county" in censusdata1
 censusdata2$statecounty <- substr(censusdata2$statecounty,1,nchar(censusdata2$statecounty)-7)
 
-#combining the two data sets with a full join to merge them by county and keep all other variables the same 
+# combining the two data sets with a full join to merge them by county and keep all other variables the same
 data <- full_join(censusdata2, crimedata2, by='statecounty')
 
-#move statecounty column to the front of new dataset titled data
+# move statecounty column to the front of new dataset titled data
 data <- data %>% select(statecounty, everything())
 
-#renaming statecounty column to State + County Name
+# renaming statecounty column to State + County Name
 data <- rename(data, 'State + County Name' = statecounty)
 
-write.csv(data, "../data/FinalProjectData.csv", row.names = FALSE)
+write.csv(data, "data/data.csv", row.names = FALSE)
 ```
