@@ -8,4 +8,20 @@ authors:
 output: html_notebook
 ---
 
-put eda here i guess
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = T, fig.width=6, fig.height=3)
+options(scipen = 0, digits = 3)  # controls base R output
+if(!require('pacman')) {
+    install.packages('pacman')
+}
+pacman::p_load(tidyverse, data.table)
+```
+
+```{r initialize crap}
+data <- fread("data/final_data.csv")
+```
+
+```{r}
+names(data)
+summary(data)
+```

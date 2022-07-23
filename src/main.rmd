@@ -8,6 +8,15 @@ authors:
 output: html_notebook
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = T, fig.width=6, fig.height=3)
+options(scipen = 0, digits = 3)  # controls base R output
+if(!require('pacman')) {
+  install.packages('pacman')
+}
+pacman::p_load(tidyverse, data.table)
+```
+
 * [unemployment data](https://www.bls.gov/lau/)
 * [basically everything else](https://www.openintro.org/data/index.php?data=county_complete)
 * [crime data](https://ucr.fbi.gov/crime-in-the-u.s/2017/crime-in-the-u.s.-2017)
@@ -15,7 +24,8 @@ output: html_notebook
 
 note that the csv files we used were slightly modified to remove/include some useless/useful data
 
-```{r}
+```{r initialization}
+data <- fread("data/final_data.csv")
 ```
 
 output variables (for each county):
@@ -24,7 +34,7 @@ output variables (for each county):
 * med. income
 
 interesting input variables
-* high school gradu
+* high school graduate
 
 control input variables (added a buncha controls):
 * population
@@ -33,10 +43,5 @@ control input variables (added a buncha controls):
   * asian
   * white
   * hispanic
-*
 
-note: also check if any of the output variables have some sort of correlation with each other
-```{r}
-mycars <- within(mtcars, { cyl <- ordered(cyl) })
-mycars
-```
+eda is [here](eda.rmd)

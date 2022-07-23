@@ -24,11 +24,11 @@ options(scipen = 0, digits = 3)  # controls base R output
 if(!require('pacman')) {
   install.packages('pacman')
 }
-pacman::p_load(glmnet, leaps, car, tidyverse, pROC, caret, data.table)
+pacman::p_load(dplyr, tidyr, data.table)
 ```
 
 ```{r reading}
-censusdata <- fread("data/counties.csv")
+censusdata <- fread("data/counties17.csv")
 crimedata <- fread("data/crime/crime17.csv")
 ```
 
@@ -36,7 +36,7 @@ crimedata <- fread("data/crime/crime17.csv")
 to_delete <- "(county|census area|borough|municipality)"
 censusdata <- censusdata %>%
         rename(county = name) %>%
-        mutate(county = sub(to_delete, "", tolower(county)) %>% trimws(),
+        mutate(county = gsub(to_delete, "", tolower(county)) %>% trimws(),
                state = tolower(state),
                statecounty = paste(state, county))
 
@@ -52,6 +52,27 @@ data <- full_join(censusdata, crimedata, by="statecounty") %>%
         select(-c(state.y, county.y, statecounty)) %>%
         select(state, county, everything()) %>%
         drop_na()
+```
 
-write.csv(data, "data/data.csv", row.names = FALSE)
+```{r strip the year out of the data}
+year <- as.character(2017)
+
+# probably bad to use non-vectorized stuff, but oh well
+names <- colnames(data)
+ind <- 0
+for (c in names) {
+  if (endsWith(c, year)) {
+    no_year <- substr(c, 1, nchar(c) - nchar(year))
+    stripped <- gsub("_", " ", no_year) %>% trimws()
+    names[ind] <- gsub(" ", "_", stripped)
+  }
+  ind <- ind + 1
+}
+
+# can't believe this actually works
+colnames(data) <- names
+```
+
+```{r just output the result}
+write.csv(data, "data/final_data.csv", row.names = FALSE)
 ```
