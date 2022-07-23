@@ -18,7 +18,7 @@ pacman::p_load(tidyverse, data.table)
 ```
 
 ```{r initialize crap, include = FALSE}
-data <- fread("../data/final_data.csv")
+data <- fread("data/final_data.csv")
 ```
 
 ```{r the most rudimentary stuff, echo = FALSE}
@@ -27,5 +27,5 @@ summary(data)
 ```
 
 ```{r}
-ggplot(data) + geom_histogram(aes(x = poverty))
+ggplot(data) + geom_histogram(aes(x = pop), bins = 100)
 ```

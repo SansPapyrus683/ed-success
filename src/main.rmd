@@ -30,16 +30,20 @@ data <- fread("data/final_data.csv")
 
 some variables are in absolutes, some are in percentages, don't know if this'll screw up the relations
 
-output variables (for each county):
-* crime rate
-* income
-* med. income
-
-interesting input variables
-* high school graduate
-
-control input variables (added a buncha controls):
-* population
-* demographics (race, gender, etc.)
+* output variables (for each county):
+  * crimes per 100k ppl (`violent_crime_rate` & `property_crime_rate`)
+  * unemployment (`unemployment_rate`)
+  * med. income/per capita income, who knows (`median_household_income` or `per_capita_income`)
+  * poverty rate (`poverty`)
+* interesting input variables
+  * high school graduate % (`hs_grad`)
+  * some college education % (`some_college`)
+  * at least bachelor's % (`bachelors`)
+* control input variables (yeah there's a lot of them):
+  * population (`pop`)
+  * demographics (`black`, `native`, etc.)
+  * veteran % (`veterans`)
+  * broadband & computer access % (`broadband` & `computer`)
+  * household information (`households`, `persons_per_household`)
 
 eda is [here](eda.rmd)

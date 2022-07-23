@@ -47,9 +47,14 @@ crime <- crime %>%
 ```
 
 ```{r}
+crime_per <- 1e5
 data <- full_join(census, crime, by="statecounty") %>%
         rename(state = state.x, county = county.x) %>%
         select(-c(state.y, county.y, statecounty)) %>%
+        mutate(
+                violent_crime_rate = violent_crime / data$pop * crime_per,
+                property_crime_rate = property_crime / data$pop * crime_per
+        ) %>%
         select(state, county, everything()) %>%
         drop_na()
 ```
