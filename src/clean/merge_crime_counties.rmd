@@ -28,26 +28,26 @@ pacman::p_load(dplyr, tidyr, data.table)
 ```
 
 ```{r reading}
-censusdata <- fread("data/counties17.csv")
-crimedata <- fread("data/crime/crime17.csv")
+census <- fread("data/counties17.csv")
+crime <- fread("data/crime/crime17.csv")
 ```
 
 ```{r initial cleaning}
 to_delete <- "(county|census area|borough|municipality)"
-censusdata <- censusdata %>%
+census <- census %>%
         rename(county = name) %>%
         mutate(county = gsub(to_delete, "", tolower(county)) %>% trimws(),
                state = tolower(state),
                statecounty = paste(state, county))
 
-crimedata <- crimedata %>%
+crime <- crime %>%
         mutate(county = tolower(county),
                state = tolower(state),
                statecounty = paste(state, county))
 ```
 
 ```{r}
-data <- full_join(censusdata, crimedata, by="statecounty") %>%
+data <- full_join(census, crime, by="statecounty") %>%
         rename(state = state.x, county = county.x) %>%
         select(-c(state.y, county.y, statecounty)) %>%
         select(state, county, everything()) %>%
@@ -59,7 +59,7 @@ year <- as.character(2017)
 
 # probably bad to use non-vectorized stuff, but oh well
 names <- colnames(data)
-ind <- 0
+ind <- 1
 for (c in names) {
   if (endsWith(c, year)) {
     no_year <- substr(c, 1, nchar(c) - nchar(year))

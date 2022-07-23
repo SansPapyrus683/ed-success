@@ -28,6 +28,8 @@ note that the csv files we used were slightly modified to remove/include some us
 data <- fread("data/final_data.csv")
 ```
 
+some variables are in absolutes, some are in percentages, don't know if this'll screw up the relations
+
 output variables (for each county):
 * crime rate
 * income
@@ -38,10 +40,6 @@ interesting input variables
 
 control input variables (added a buncha controls):
 * population
-* race percentages
-  * black
-  * asian
-  * white
-  * hispanic
+* demographics (race, gender, etc.)
 
 eda is [here](eda.rmd)

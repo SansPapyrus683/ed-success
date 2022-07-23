@@ -17,11 +17,15 @@ if(!require('pacman')) {
 pacman::p_load(tidyverse, data.table)
 ```
 
-```{r initialize crap}
-data <- fread("data/final_data.csv")
+```{r initialize crap, include = FALSE}
+data <- fread("../data/final_data.csv")
+```
+
+```{r the most rudimentary stuff, echo = FALSE}
+names(data)
+summary(data)
 ```
 
 ```{r}
-names(data)
-summary(data)
+ggplot(data) + geom_histogram(aes(x = poverty))
 ```
