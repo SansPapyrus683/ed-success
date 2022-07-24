@@ -1,6 +1,7 @@
 title: "Merging Data"
 author:
 - Arushi Agarwal
+- Kevin Sheng
 date: '7/22/2022'
 output:
   html_document:
@@ -52,17 +53,10 @@ crime <- crime %>%
 ```
 
 ```{r}
-# instead of crime percentage, i'm gonna do crime per 100k ppl
-crime_per <- 1e5
 data <- full_join(census, crime, by="statecounty") %>%
         # remove the duplicate columns
         rename(state = state.x, county = county.x) %>%
         select(-c(state.y, county.y, statecounty)) %>%
-        # get the crime RATES
-        mutate(
-                violent_crime_rate = violent_crime / data$pop * crime_per,
-                property_crime_rate = property_crime / data$pop * crime_per
-        ) %>%
         # reorder it so that the state & county are at the front
         select(state, county, everything()) %>%
         drop_na()
@@ -87,6 +81,17 @@ for (c in names) {
 
 # can't believe this actually works (renames the df)
 colnames(data) <- names
+```
+
+```{r}
+# instead of crime percentage, i'm gonna do crime per 100k ppl
+crime_per <- 1e5
+data <- data %>%
+        # get the crime RATES
+        mutate(
+                violent_crime_rate = violent_crime / data$pop * crime_per,
+                property_crime_rate = property_crime / data$pop * crime_per
+        )
 ```
 
 ```{r just output the result}

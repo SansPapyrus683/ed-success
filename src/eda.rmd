@@ -41,10 +41,8 @@ data %>% filter(pop < 1e4) %>% ggplot() + geom_histogram(aes(x = pop), bins = 10
 
 let's try plotting population against some stats, maybe larger cities have some common characteristics
 ```{r}
-# data %>%
-#     ggplot(aes(x = pop)) +
-#     geom_jitter(aes(y = hs_grad))
 data %>%
+    filter(pop < 1e5) %>%
     ggplot(aes(x = pop)) +
     geom_jitter(aes(y = property_crime_rate), col = "blue") +
     geom_jitter(aes(y = violent_crime_rate), col = "red")
