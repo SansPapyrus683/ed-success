@@ -11,8 +11,8 @@ output: html_notebook
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache = T, fig.width=6, fig.height=3)
 options(scipen = 0, digits = 3)  # controls base R output
-if(!require('pacman')) {
-  install.packages('pacman')
+if (!require('pacman')) {
+    install.packages('pacman')
 }
 pacman::p_load(tidyverse, data.table)
 ```
@@ -45,5 +45,6 @@ some variables are in absolutes, some are in percentages, don't know if this'll 
   * veteran % (`veterans`)
   * broadband & computer access % (`broadband` & `computer`)
   * household information (`households`, `persons_per_household`)
+  * number of ppl in the labor force (`civilian_labor_force`)
 
 eda is [here](eda.rmd)

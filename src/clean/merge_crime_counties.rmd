@@ -21,7 +21,7 @@ urlcolor: blue
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache = T, fig.width=6, fig.height=3)
 options(scipen = 0, digits = 3)  # controls base R output
-if(!require('pacman')) {
+if (!require('pacman')) {
   install.packages('pacman')
 }
 pacman::p_load(dplyr, tidyr, data.table)
@@ -33,13 +33,18 @@ crime <- fread("data/crime/crime17.csv")
 ```
 
 ```{r initial cleaning}
+# unnecessary parse of the names (a regex string)
 to_delete <- "(county|census area|borough|municipality)"
 census <- census %>%
+        # rename name to county
         rename(county = name) %>%
+        # remove all the unnecessary parts & convert the state & county names to lowercase
         mutate(county = gsub(to_delete, "", tolower(county)) %>% trimws(),
                state = tolower(state),
+               # for merging
                statecounty = paste(state, county))
 
+# do basically the same w/ the crime data
 crime <- crime %>%
         mutate(county = tolower(county),
                state = tolower(state),
@@ -47,14 +52,18 @@ crime <- crime %>%
 ```
 
 ```{r}
+# instead of crime percentage, i'm gonna do crime per 100k ppl
 crime_per <- 1e5
 data <- full_join(census, crime, by="statecounty") %>%
+        # remove the duplicate columns
         rename(state = state.x, county = county.x) %>%
         select(-c(state.y, county.y, statecounty)) %>%
+        # get the crime RATES
         mutate(
                 violent_crime_rate = violent_crime / data$pop * crime_per,
                 property_crime_rate = property_crime / data$pop * crime_per
         ) %>%
+        # reorder it so that the state & county are at the front
         select(state, county, everything()) %>%
         drop_na()
 ```
@@ -66,15 +75,17 @@ year <- as.character(2017)
 names <- colnames(data)
 ind <- 1
 for (c in names) {
+  # remove the suffixes that start with 2017
   if (endsWith(c, year)) {
     no_year <- substr(c, 1, nchar(c) - nchar(year))
+    # strip away any undescores by converting them to spaces then by using trimws()
     stripped <- gsub("_", " ", no_year) %>% trimws()
     names[ind] <- gsub(" ", "_", stripped)
   }
   ind <- ind + 1
 }
 
-# can't believe this actually works
+# can't believe this actually works (renames the df)
 colnames(data) <- names
 ```
 

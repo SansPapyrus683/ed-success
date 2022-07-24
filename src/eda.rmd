@@ -11,7 +11,7 @@ output: html_notebook
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache = T, fig.width=6, fig.height=3)
 options(scipen = 0, digits = 3)  # controls base R output
-if(!require('pacman')) {
+if (!require('pacman')) {
     install.packages('pacman')
 }
 pacman::p_load(tidyverse, data.table)
@@ -21,11 +21,32 @@ pacman::p_load(tidyverse, data.table)
 data <- fread("data/final_data.csv")
 ```
 
-```{r the most rudimentary stuff, echo = FALSE}
-names(data)
-summary(data)
+```{r rudimentary stuff, echo = FALSE}
+data %>%
+    select(-c("fips", "fips_state", "fips_county")) %>%
+    summary()
 ```
 
+# start with population
+
+for some weird reason population isn't a normal distribution
 ```{r}
-ggplot(data) + geom_histogram(aes(x = pop), bins = 100)
+data %>% ggplot() + geom_histogram(aes(x = pop), bins = 100)
 ```
+
+even if you just break down the first bar, it isn't normal
+```{r}
+data %>% filter(pop < 1e4) %>% ggplot() + geom_histogram(aes(x = pop), bins = 100)
+```
+
+let's try plotting population against some stats, maybe larger cities have some common characteristics
+```{r}
+# data %>%
+#     ggplot(aes(x = pop)) +
+#     geom_jitter(aes(y = hs_grad))
+data %>%
+    ggplot(aes(x = pop)) +
+    geom_jitter(aes(y = property_crime_rate), col = "blue") +
+    geom_jitter(aes(y = violent_crime_rate), col = "red")
+```
+oh...kay... that's not the result i was hoping for
