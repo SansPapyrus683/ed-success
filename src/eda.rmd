@@ -8,8 +8,8 @@ authors:
 output: html_notebook
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, cache = T, fig.width=6, fig.height=3)
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, cache = T, fig.width=6, fig.height=3)
 options(scipen = 0, digits = 3)  # controls base R output
 if (!require('pacman')) {
     install.packages('pacman')
@@ -18,10 +18,11 @@ pacman::p_load(tidyverse, data.table)
 ```
 
 ```{r initialize crap, include = FALSE}
-data <- fread("data/final_data.csv")
+data <- fread("../data/final_data.csv")
 ```
 
-```{r rudimentary stuff, echo = FALSE}
+let's start off with some rudimentary stuff
+```{r rudimentary stuff}
 data %>%
     select(-c("fips", "fips_state", "fips_county")) %>%
     summary()
@@ -34,20 +35,81 @@ for some weird reason population isn't a normal distribution
 data %>% ggplot() + geom_histogram(aes(x = pop), bins = 100)
 ```
 
-even if you just break down the first bar, it isn't normal
+even if you just break down the first bar, it isn't really normal
 ```{r}
-data %>% filter(pop < 1e4) %>% ggplot() + geom_histogram(aes(x = pop), bins = 100)
+# to prevent the super big counties from making the rest really darn small
+pop_lim <- 2e5
+lim_data <- data %>% filter(pop < pop_lim)
+lim_data %>% ggplot() + geom_histogram(aes(x = pop), bins = 100)
 ```
 
 let's try plotting population against some stats, maybe larger cities have some common characteristics
 ```{r}
-data %>%
-    filter(pop < 1e5) %>%
+points <- c("property crime", "violent crime")
+lim_data %>%
     ggplot(aes(x = pop)) +
-    geom_jitter(aes(y = property_crime_rate), col = "blue") +
-    geom_jitter(aes(y = violent_crime_rate), col = "red")
-```
-oh...kay... that's not the result i was hoping for
+    geom_jitter(aes(y = property_crime_rate, colour = points[1])) +
+    geom_jitter(aes(y = violent_crime_rate, colour = points[2])) +
+    scale_color_manual("type", breaks = points, values = c("blue", "red")) +
+    xlab("population") +
+    ylab("crime per 100k people") +
+    labs(title = "crime rates vs. population")
 
-by the way if you see that one point around the 5000 line, it's bibb county in georgia \
-that place has a population of 150k and 7k property crimes, so 5k crimes per 100k people isn't too far off
+points <- c("unemployment rate", "poverty rate")
+lim_data %>%
+    ggplot(aes(x = pop)) +
+    geom_jitter(aes(y = unemployment_rate, colour = points[1])) +
+    geom_jitter(aes(y = poverty, colour = points[2])) +
+    scale_color_manual("type", breaks = points, values = c("purple", "red")) +
+    xlab("population") +
+    ylab("percentage") +
+    labs(title = "percentage stuff vs. population")
+
+points <- c("median household income", "per capita income")
+lim_data %>%
+    ggplot(aes(x = pop)) +
+    geom_jitter(aes(y = median_household_income, colour = points[1])) +
+    geom_jitter(aes(y = per_capita_income, colour = points[2])) +
+    scale_color_manual("type", breaks = points, values = c("green", "yellow")) +
+    xlab("population") +
+    ylab("income ($)") +
+    labs(title = "income vs. population")
+```
+oh...kay... those weren't really the results i was hoping for
+
+by the way if you see that one county that has a property crime rate of 5k per 100k people, it's bibb county in georgia \
+
+ok now let's plot some stuff against `hs_grad`, maybe that'll yield better results
+```{r}
+points <- c("property crime", "violent crime")
+lim_data %>%
+    ggplot(aes(x = hs_grad)) +
+    geom_jitter(aes(y = property_crime_rate, colour = points[1])) +
+    geom_jitter(aes(y = violent_crime_rate, colour = points[2])) +
+    scale_color_manual("type", breaks = points, values = c("blue", "red")) +
+    xlab("high school grad rate") +
+    ylab("crime per 100k people") +
+    labs(title = "crime rates vs. high school grad rate")
+
+points <- c("unemployment rate", "poverty rate")
+lim_data %>%
+    ggplot(aes(x = hs_grad)) +
+    geom_jitter(aes(y = unemployment_rate, colour = points[1])) +
+    geom_jitter(aes(y = poverty, colour = points[2])) +
+    scale_color_manual("type", breaks = points, values = c("purple", "red")) +
+    xlab("high school grad rate") +
+    ylab("percentage") +
+    labs(title = "percentage stuff vs. high school grad rate")
+
+points <- c("median household income", "per capita income")
+lim_data %>%
+    ggplot(aes(x = hs_grad)) +
+    geom_jitter(aes(y = median_household_income, colour = points[1])) +
+    geom_jitter(aes(y = per_capita_income, colour = points[2])) +
+    scale_color_manual("type", breaks = points, values = c("green", "yellow")) +
+    xlab("high school grad rate") +
+    ylab("income ($)") +
+    labs(title = "income vs. high school grad rate")
+```
+wow that's so much better \
+maybe our idea wasn't absolute dogwater
