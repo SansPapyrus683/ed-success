@@ -48,3 +48,6 @@ data %>%
     geom_jitter(aes(y = violent_crime_rate), col = "red")
 ```
 oh...kay... that's not the result i was hoping for
+
+by the way if you see that one point around the 5000 line, it's bibb county in georgia \
+that place has a population of 150k and 7k property crimes, so 5k crimes per 100k people isn't too far off
