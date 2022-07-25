@@ -113,3 +113,18 @@ lim_data %>%
 ```
 wow that's so much better \
 maybe our idea wasn't absolute dogwater
+
+also tried graphing `broadband` and `computer` against `median_household_income` and got this:
+```{r}
+points <- c("broadband access", "computer access %")
+lim_data %>%
+    ggplot(aes(x = median_household_income)) +
+    geom_jitter(aes(y = broadband, colour = points[1])) +
+    geom_jitter(aes(y = computer, colour = points[2])) +
+    scale_color_manual("type", breaks = points, values = c("cyan", "blue")) +
+    xlab("median household income") +
+    ylab("% of pop") +
+    labs(title = "tech access measures vs. median household income")
+```
+a very positive correlation, but it's painfully obvious when you realize that richer families will *obviously* have more purchasing power for tech products and stuff \
+so yeah, we're taking that away from the predictors because it's cheating, in a sense

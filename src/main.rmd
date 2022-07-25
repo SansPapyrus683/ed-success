@@ -43,7 +43,7 @@ some variables are in absolutes, some are in percentages, don't know if this'll 
   * population (`pop`)
   * demographics (`black`, `native`, etc.)
   * veteran % (`veterans`)
-  * broadband & computer access % (`broadband` & `computer`)
+  * ~~broadband & computer access % (`broadband` & `computer`)~~
   * household information (`households`, `persons_per_household`)
   * number of ppl in the labor force (`civilian_labor_force`)
 
