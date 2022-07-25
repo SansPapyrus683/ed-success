@@ -18,7 +18,7 @@ pacman::p_load(tidyverse, data.table)
 ```
 
 ```{r initialize crap, include = FALSE}
-data <- fread("../data/final_data.csv")
+data <- fread("data/final_data.csv")
 ```
 
 let's start off with some rudimentary stuff
@@ -40,7 +40,7 @@ even if you just break down the first bar, it isn't really normal
 # to prevent the super big counties from making the rest really darn small
 pop_lim <- 2e5
 lim_data <- data %>% filter(pop < pop_lim)
-lim_data %>% ggplot() + geom_histogram(aes(x = pop), bins = 100)
+lim_data %>% ggplot() + geom_histogram(aes(x = pop), bins = 150)
 ```
 
 let's try plotting population against some stats, maybe larger cities have some common characteristics
@@ -82,7 +82,7 @@ by the way if you see that one county that has a property crime rate of 5k per 1
 ok now let's plot some stuff against `hs_grad`, maybe that'll yield better results
 ```{r}
 points <- c("property crime", "violent crime")
-lim_data %>%
+data %>%
     ggplot(aes(x = hs_grad)) +
     geom_jitter(aes(y = property_crime_rate, colour = points[1])) +
     geom_jitter(aes(y = violent_crime_rate, colour = points[2])) +
@@ -92,7 +92,7 @@ lim_data %>%
     labs(title = "crime rates vs. high school grad rate")
 
 points <- c("unemployment rate", "poverty rate")
-lim_data %>%
+data %>%
     ggplot(aes(x = hs_grad)) +
     geom_jitter(aes(y = unemployment_rate, colour = points[1])) +
     geom_jitter(aes(y = poverty, colour = points[2])) +
@@ -102,7 +102,7 @@ lim_data %>%
     labs(title = "percentage stuff vs. high school grad rate")
 
 points <- c("median household income", "per capita income")
-lim_data %>%
+data %>%
     ggplot(aes(x = hs_grad)) +
     geom_jitter(aes(y = median_household_income, colour = points[1])) +
     geom_jitter(aes(y = per_capita_income, colour = points[2])) +
@@ -114,10 +114,45 @@ lim_data %>%
 wow that's so much better \
 maybe our idea wasn't absolute dogwater
 
+out of curiosity i also graphed the output variables against `bachelors` (wow this is getting repetitive)
+```{r}
+points <- c("property crime", "violent crime")
+data %>%
+    ggplot(aes(x = bachelors)) +
+    geom_jitter(aes(y = property_crime_rate, colour = points[1])) +
+    geom_jitter(aes(y = violent_crime_rate, colour = points[2])) +
+    scale_color_manual("type", breaks = points, values = c("blue", "red")) +
+    xlab("bachelor rate") +
+    ylab("crime per 100k people") +
+    labs(title = "crime rates vs. bachelor rate")
+
+points <- c("unemployment rate", "poverty rate")
+data %>%
+    ggplot(aes(x = bachelors)) +
+    geom_jitter(aes(y = unemployment_rate, colour = points[1])) +
+    geom_jitter(aes(y = poverty, colour = points[2])) +
+    scale_color_manual("type", breaks = points, values = c("purple", "red")) +
+    xlab("bachelor rate") +
+    ylab("percentage") +
+    labs(title = "percentage stuff vs. bachelor rate")
+
+points <- c("median household income", "per capita income")
+data %>%
+    ggplot(aes(x = bachelors)) +
+    geom_jitter(aes(y = median_household_income, colour = points[1])) +
+    geom_jitter(aes(y = per_capita_income, colour = points[2])) +
+    scale_color_manual("type", breaks = points, values = c("green", "yellow")) +
+    xlab("bachelor rate") +
+    ylab("income ($)") +
+    labs(title = "income vs. bachelor rate")
+```
+bro does nothing correlate with crime rate \
+it seems that unemployment is slightly negatively correlated with the bachelor rate though, that's good i guess
+
 also tried graphing `broadband` and `computer` against `median_household_income` and got this:
 ```{r}
-points <- c("broadband access", "computer access %")
-lim_data %>%
+points <- c("broadband access %", "computer access %")
+data %>%
     ggplot(aes(x = median_household_income)) +
     geom_jitter(aes(y = broadband, colour = points[1])) +
     geom_jitter(aes(y = computer, colour = points[2])) +
@@ -127,4 +162,25 @@ lim_data %>%
     labs(title = "tech access measures vs. median household income")
 ```
 a very positive correlation, but it's painfully obvious when you realize that richer families will *obviously* have more purchasing power for tech products and stuff \
-so yeah, we're taking that away from the predictors because it's cheating, in a sense
+so yeah, don't think that should be in our input variables because it's cheating, in a sense
+
+moving on to ethnicity (finna get cancelled)
+```{r race pivots}
+races <- data %>%
+        select(
+            black, native, asian, pac_isl,
+            hispanic, white_not_hispanic,
+            other_single_race, two_plus_races
+        ) %>%
+        pivot_longer(cols = everything(), names_to = "race", values_to = "pct")
+races$race <- as.factor(races$race)
+```
+
+these are the box plots of the percentages of each race in each community
+```{r plotting races}
+races %>%
+        ggplot() +
+        geom_boxplot(aes(x = race, y = pct, fill = race))
+```
+wow, there's like no asians/pacific islanders lol \
+there is a lot of hispanic-majority and black-majority communities, but those communities are in the minority
