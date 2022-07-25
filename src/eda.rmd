@@ -9,6 +9,7 @@ output: html_notebook
 ---
 
 ```{r setup, include = FALSE}
+# echo = FALSE because there's so much boilerplate code jesus
 knitr::opts_chunk$set(echo = FALSE, cache = T, fig.width=6, fig.height=3)
 options(scipen = 0, digits = 3)  # controls base R output
 if (!require('pacman')) {
@@ -35,7 +36,8 @@ for some weird reason population isn't a normal distribution
 data %>% ggplot() + geom_histogram(aes(x = pop), bins = 100)
 ```
 
-even if you just break down the first bar, it isn't really normal
+even if you just break down the first bar, it isn't really normal \
+the plot's heavily skewed-right, showing us that the HUGE majority of counties in the US have a population of between ~5k and 100k
 ```{r}
 # to prevent the super big counties from making the rest really darn small
 pop_lim <- 2e5
@@ -112,7 +114,19 @@ data %>%
     labs(title = "income vs. high school grad rate")
 ```
 wow that's so much better \
-maybe our idea wasn't absolute dogwater
+maybe our idea wasn't absolute dogwater \
+weird though, `hs_grad` seems to correlate pretty strongly with poverty but not with unemployment \
+also it *kinda* relates to property crime, but not really to violent crime
+
+hm, what if we graphed property crime against violent crime
+```{r}
+data %>%
+    ggplot() +
+    geom_jitter(aes(x = violent_crime_rate, y = property_crime_rate)) +
+    labs("property crime rate vs. violent crime rate")
+```
+OOF \
+god, there's so many outliers
 
 out of curiosity i also graphed the output variables against `bachelors` (wow this is getting repetitive)
 ```{r}
