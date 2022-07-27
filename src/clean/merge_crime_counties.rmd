@@ -90,7 +90,8 @@ data <- data %>%
         # get the crime RATES
         mutate(
                 violent_crime_rate = violent_crime / data$pop * crime_per,
-                property_crime_rate = property_crime / data$pop * crime_per
+                property_crime_rate = property_crime / data$pop * crime_per,
+                crime_rate = violent_crime_rate + property_crime_rate
         )
 ```
 
