@@ -5,16 +5,23 @@ authors:
 - Arushi Agarwal
 - Peter Kim
 - Nathan Dang
-output: html_notebook
+output:
+  html_notebook:
+    code_folding: show
+    highlight: haddock
+    theme: lumen
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, cache = T, fig.width=6, fig.height=3)
-options(scipen = 0, digits = 3)  # controls base R output
+knitr::opts_chunk$set(echo = TRUE, cache = T, fig.width = 6, fig.height = 3)
+options(scipen = 10, digits = 3)  # controls base R output
 if (!require('pacman')) {
-    install.packages('pacman')
+  install.packages('pacman')
 }
-pacman::p_load(tidyverse, data.table)
+pacman::p_load(tidyverse, data.table, glmnet, car)
 ```
 
 * [unemployment data](https://www.bls.gov/lau/)
@@ -31,24 +38,101 @@ data <- fread("data/final_data.csv")
 some variables are in absolutes, some are in percentages, don't know if this'll screw up the relations
 
 * output variables (for each county):
-  * crimes per 100k ppl (`violent_crime_rate` & `property_crime_rate`)
-  * unemployment (`unemployment_rate`)
-  * med. income/per capita income, who knows (`median_household_income` or `per_capita_income`)
-  * poverty rate (`poverty`)
+* crimes per 100k ppl (`violent_crime_rate` & `property_crime_rate`)
+* unemployment (`unemployment_rate`)
+* med. income/per capita income, who knows (`median_household_income` or `per_capita_income`)
+* poverty rate (`poverty`)
 * interesting input variables
-  * high school graduate % (`hs_grad`)
-  * some college education % (`some_college`)
-  * at least bachelor's % (`bachelors`)
+* high school graduate % (`hs_grad`)
+* some college education % (`some_college`)
+* at least bachelor's % (`bachelors`)
 * control input variables (yeah there's a lot of them):
-  * population (`pop`)
-  * demographics
-    * race (`black`, `native`, etc.)
-    * age ranges (`age_under_5`, `age_over_65`, etc.)
-  * birth rate (`women_16_to_50_birth_rate`)
-  * veteran % (`veterans`)
-  * ~~broadband~~ and computer access (~~`broadband`~~ and `computer` respectively)
-  * household information (`households`, `persons_per_household`)
-  * insurance statistics (`uninsured`, `uninsured_age_unde_r6`, etc.)
-  * number of ppl in the labor force (`civilian_labor_force`)
+* population (`pop`)
+* demographics
+* race (`black`, `native`, etc.)
+* age ranges (`age_under_5`, `age_over_65`, etc.)
+* birth rate (`women_16_to_50_birth_rate`)
+* veteran % (`veterans`)
+* ~~broadband~~ and computer access (~~`broadband`~~ and `computer` respectively)
+* household information (`households`, `persons_per_household`)
+* insurance statistics (`uninsured`, `uninsured_age_under_6`, etc.)
+* number of ppl in the labor force (`civilian_labor_force`)
 
 eda is [here](eda.rmd)
+
+so let's get started!
+
+```{r separating input}
+inp_data <- data %>% select(
+  # VARS OF INTEREST
+  hs_grad, some_college, bachelors,  # education stats
+
+  # CONTROLS
+  pop,  # population
+  # demographics (races)
+  black, native, asian, pac_isl, hispanic,
+  white_not_hispanic, other_single_race, two_plus_races,
+  # demographics (age)
+  age_under_5, age_over_65, median_age,
+  women_16_to_50_birth_rate,  # birth rate
+  veterans,  # veteran % of pop
+  computer,  # % w/ access to computer
+  households, persons_per_household,  # pretty obvious
+  # % of population that's uninsured & whatever
+  uninsured, uninsured_age_under_6, uninsured_age_under_19, uninsured_age_over_74,
+  civilian_labor_force  # size of labor force
+)
+```
+
+# median income
+
+here's the analysis for median income (per capita income is so closely related, it doesn't really matter)
+
+## lasso selection
+
+### finding the lambda
+```{r}
+income_y <- data$median_household_income
+income_data <- inp_data
+
+cv_res_income <- cv.glmnet(as.matrix(income_data), income_y)
+lambda <- cv_res_income$lambda.1se
+plot(cv_res_income)
+```
+
+```{r income lasso}
+coef(cv_res_income, s = "lambda.1se")
+```
+
+```{r}
+bad <- c('some_college',
+         'pop',
+         'white_not_hispanic',
+         'households',
+         'uninsured_age_over_74',
+         'civilian_labor_force')
+income_data <- income_data %>%
+  select(-all_of(bad))
+```
+
+## actual linear regression + significance stuff
+
+ok now we can do our actual linear regression and see if the variables are significant or not \
+aka backward selection spam
+```{r}
+income_data$income <- data$median_household_income
+fit_income <- lm(income ~ ., data = income_data)
+summary(fit_income)
+```
+
+```{r}
+bad <- c('black',
+         'native',
+         'other_single_race',
+         'two_plus_races',
+         'uninsured_age_under_6')
+income_data <- income_data %>%
+  select(-all_of(bad))
+fit_income <- lm(income ~ ., data = income_data)
+summary(fit_income)
+```
