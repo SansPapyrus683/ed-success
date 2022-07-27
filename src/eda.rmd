@@ -6,13 +6,13 @@ authors:
 - Peter Kim
 - Nathan Dang
 output:
-html_notebook:
-code_folding: show
-highlight: haddock
-theme: lumen
-toc: yes
-toc_depth: 4
-toc_float: yes
+  html_notebook:
+    code_folding: show
+    highlight: haddock
+    theme: lumen
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
 ---
 
 ```{r setup, include = FALSE}
