@@ -176,7 +176,7 @@ data %>%
     labs(title = "tech access measures vs. median household income")
 ```
 a very positive correlation, but it's painfully obvious when you realize that richer families will *obviously* have more purchasing power for tech products and stuff \
-so yeah, don't think that should be in our input variables because it's cheating, in a sense
+also, because it seems the correlation that `computer` and `broradband` have are so similar, i'm just gonna use `computer`
 
 moving on to ethnicity (finna get cancelled)
 ```{r race pivots}
