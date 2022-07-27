@@ -41,10 +41,14 @@ some variables are in absolutes, some are in percentages, don't know if this'll 
   * at least bachelor's % (`bachelors`)
 * control input variables (yeah there's a lot of them):
   * population (`pop`)
-  * demographics (`black`, `native`, etc.)
+  * demographics
+    * race (`black`, `native`, etc.)
+    * age ranges (`age_under_5`, `age_over_65`, etc.)
+  * birth rate (`women_16_to_50_birth_rate`)
   * veteran % (`veterans`)
-  * ~~broadband & computer access % (`broadband` & `computer`)~~
+  * ~~broadband~~ and computer access (~~`broadband`~~ and `computer` respectively)
   * household information (`households`, `persons_per_household`)
+  * insurance statistics (`uninsured`, `uninsured_age_unde_r6`, etc.)
   * number of ppl in the labor force (`civilian_labor_force`)
 
 eda is [here](eda.rmd)
