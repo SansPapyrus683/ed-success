@@ -38,25 +38,25 @@ data <- fread("data/final_data.csv")
 some variables are in absolutes, some are in percentages, don't know if this'll screw up the relations
 
 * output variables (for each county):
-* crimes per 100k ppl (`violent_crime_rate` & `property_crime_rate`)
-* unemployment (`unemployment_rate`)
-* med. income/per capita income, who knows (`median_household_income` or `per_capita_income`)
-* poverty rate (`poverty`)
+  * crimes per 100k ppl (`violent_crime_rate` & `property_crime_rate`)
+  * unemployment (`unemployment_rate`)
+  * med. income/per capita income, who knows (`median_household_income` or `per_capita_income`)
+  * poverty rate (`poverty`)
 * interesting input variables
-* high school graduate % (`hs_grad`)
-* some college education % (`some_college`)
-* at least bachelor's % (`bachelors`)
+  * high school graduate % (`hs_grad`)
+  * some college education % (`some_college`)
+  * at least bachelor's % (`bachelors`)
 * control input variables (yeah there's a lot of them):
-* population (`pop`)
-* demographics
-* race (`black`, `native`, etc.)
-* age ranges (`age_under_5`, `age_over_65`, etc.)
-* birth rate (`women_16_to_50_birth_rate`)
-* veteran % (`veterans`)
-* ~~broadband~~ and computer access (~~`broadband`~~ and `computer` respectively)
-* household information (`households`, `persons_per_household`)
-* insurance statistics (`uninsured`, `uninsured_age_under_6`, etc.)
-* number of ppl in the labor force (`civilian_labor_force`)
+  * population (`pop`)
+  * demographics
+    * race (`black`, `native`, etc.)
+    * age ranges (`age_under_5`, `age_over_65`, etc.)
+  * birth rate (`women_16_to_50_birth_rate`)
+  * veteran % (`veterans`)
+  * ~~broadband~~ and computer access (~~`broadband`~~ and `computer` respectively)
+  * household information (`households`, `persons_per_household`)
+  * insurance statistics (`uninsured`, `uninsured_age_under_6`, etc.)
+  * number of ppl in the labor force (`civilian_labor_force`)
 
 eda is [here](eda.rmd)
 
@@ -136,3 +136,9 @@ income_data <- income_data %>%
 fit_income <- lm(income ~ ., data = income_data)
 summary(fit_income)
 ```
+
+# crime rate
+
+# poverty rate
+
+# unemployment
