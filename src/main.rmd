@@ -21,7 +21,7 @@ options(scipen = 10, digits = 3)  # controls base R output
 if (!require('pacman')) {
   install.packages('pacman')
 }
-pacman::p_load(tidyverse, data.table, glmnet, car)
+pacman::p_load(tidyverse, data.table, glmnet, car, keras)
 ```
 
 * [unemployment data](https://www.bls.gov/lau/)
@@ -33,6 +33,7 @@ note that the csv files we used were slightly modified to remove/include some us
 
 ```{r initialization}
 data <- fread("data/final_data.csv")
+set.seed(420)
 ```
 
 some variables are in absolutes, some are in percentages, don't know if this'll screw up the relations
@@ -86,11 +87,10 @@ inp_data <- data %>% select(
 
 # median income
 
-here's the analysis for median income (per capita income is so closely related, it doesn't really matter)
+here's the analysis for median income (per capita income is so closely related that i'm just gonna lump it in with this)
 
 ## lasso selection
 
-### finding the lambda
 ```{r}
 income_y <- data$median_household_income
 income_data <- inp_data
@@ -100,31 +100,34 @@ lambda <- cv_res_income$lambda.1se
 plot(cv_res_income)
 ```
 
+here are the coefficients that lasso thought were alright
 ```{r income lasso}
 coef(cv_res_income, s = "lambda.1se")
 ```
 
+and now we cut out all the bad coefficients and we're good to go do some `lm`ing!
 ```{r}
 bad <- c('some_college',
          'pop',
          'white_not_hispanic',
-         'households',
+         'households',  # not 0 but small enough to basically not count
          'uninsured_age_over_74',
          'civilian_labor_force')
 income_data <- income_data %>%
   select(-all_of(bad))
 ```
 
-## actual linear regression + significance stuff
+## actual linreg & significance
 
-ok now we can do our actual linear regression and see if the variables are significant or not \
-aka backward selection spam
+time for some significance checking \
+note that the threshold for a significant variable in our book is 5%
 ```{r}
 income_data$income <- data$median_household_income
 fit_income <- lm(income ~ ., data = income_data)
 summary(fit_income)
 ```
 
+after trimming the awful variables, we now have our final list!
 ```{r}
 bad <- c('black',
          'native',
@@ -137,8 +140,49 @@ fit_income <- lm(income ~ ., data = income_data)
 summary(fit_income)
 ```
 
+# unemployment
+
+## lasso selection
+
+yeah, basically do the same stuff as before
+```{r}
+unemp_data <- inp_data %>%
+  mutate(rate = data$unemployment_rate)
+
+Y <- as.matrix(unemp_data[, 26])  # 26 is the column with all the outputs
+X <- as.matrix((unemp_data)[, -26])
+
+cv_res_ue <- cv.glmnet(X, Y, alpha = 1, nfolds = 10)
+plot(cv_res_ue)
+```
+
+this time the lasso got rid of a lot more variables than ebfore, that's kinda good i guess
+```{r}
+coef(cv_res_ue, s = "lambda.1se")
+```
+
+## linreg & significance
+
+damn, it seems `some_college` didn't make the cut this time as well, i wonder why that is
+```{r}
+fit_ue1 <- lm(
+        rate ~ hs_grad + bachelors + black + native + white_not_hispanic + age_under_5 + women_16_to_50_birth_rate + veterans + computer + uninsured_age_under_19,
+        unemp_data
+)
+summary(fit_ue1)
+```
+
+and here's the final fit with all the definitely significant variables
+```{r}
+fit_ue2 <- lm(
+        rate ~ hs_grad + bachelors + native + white_not_hispanic + age_under_5 + women_16_to_50_birth_rate + veterans + computer + uninsured_age_under_19,
+        unemp_data
+)
+summary(fit_ue2)
+```
+
 # crime rate
 
 # poverty rate
 
-# unemployment
+# neural net time!
