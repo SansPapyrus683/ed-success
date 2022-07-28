@@ -156,7 +156,7 @@ cv_res_ue <- cv.glmnet(X, Y, alpha = 1, nfolds = 10)
 plot(cv_res_ue)
 ```
 
-this time the lasso got rid of a lot more variables than ebfore, that's kinda good i guess
+this time the lasso got rid of a lot more variables than before, that's kinda good i guess
 ```{r}
 coef(cv_res_ue, s = "lambda.1se")
 ```
@@ -181,8 +181,53 @@ fit_ue2 <- lm(
 summary(fit_ue2)
 ```
 
-# crime rate
-
 # poverty rate
+
+again, input preparation (kinda repetitive ngl)
+```{r}
+pov_data <- inp_data %>%
+        mutate(pov = data$poverty)
+```
+
+## lasso selection
+
+```{r}
+y <- data$poverty
+X <- as.matrix(pov_data)[, -26]
+
+cv_res_pov <- cv.glmnet(X, y, alpha = 1)
+coef_pov <- coef(cv_res_pov, s = "lambda.1se")  #s=c("lambda.1se","lambda.min") or lambda value
+coef_pov <- coef_pov[which(coef_pov != 0),]  # get the non=zero coefficients
+good_vars <- names(coef_pov)[-1]
+plot(cv_res_pov)
+```
+
+## linreg & significance
+
+```{r}
+total <- c("pov", var.min)
+# get a subset with response and LASSO output
+pov_data <-  pov_data[, ..total]
+fit_pov <- lm(pov ~ ., pov_data)
+summary(fit_pov)
+```
+
+```{r}
+bad <- c("two_plus_races",
+         "other_single_race",
+         "pac_isl",
+         "uninsured_age_over_74",
+         "black",
+         "veterans",
+         "asian")
+pov_data <- pov_data %>%
+        select(-all_of(bad))
+
+fit_pov <- lm(pov ~ ., pov_data)
+summary(fit_pov)
+plot(fit_pov)
+```
+
+# crime rate
 
 # neural net time!
