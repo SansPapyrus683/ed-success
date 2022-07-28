@@ -33,7 +33,7 @@ SEED <- 420
 note that the csv files we used were slightly modified to remove/include some useless/useful data
 
 ```{r initialization}
-data <- fread("data/final_data.csv")
+data <- fread("../data/final_data.csv")
 ```
 
 some variables are in absolutes, some are in percentages, don't know if this'll screw up the relations
