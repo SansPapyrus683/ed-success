@@ -96,7 +96,6 @@ income_y <- data$median_household_income
 income_data <- inp_data
 
 cv_res_income <- cv.glmnet(as.matrix(income_data), income_y)
-lambda <- cv_res_income$lambda.1se
 plot(cv_res_income)
 ```
 
@@ -229,5 +228,40 @@ plot(fit_pov)
 ```
 
 # crime rate
+
+## lasso selection
+
+```{r}
+crime_y <- data$crime_rate
+crime_data <- inp_data
+
+cv_res_crime <- cv.glmnet(as.matrix(crime_data), crime_y)
+plot(cv_res_crime)
+```
+
+```{r}
+crime_coefs <- coef(cv_res_crime, s = "lambda.1se")
+crime_coefs <- crime_coefs[which(crime_coefs != 0),]
+
+crime_coefs <- c("crime_rate", names(crime_coefs)[-1])
+crime_data <- data[, ..crime_coefs]
+```
+
+## linreg & significance
+
+```{r}
+fit_crime <- lm(crime_rate ~ ., crime_data)
+summary(fit_crime)
+```
+
+```{r}
+bad <- "age_over_65"
+crime_data <- crime_data %>%
+        select(-all_of(bad))
+
+fit_crime <- lm(crime_rate ~ ., crime_data)
+summary(fit_crime)
+plot(fit_crime)
+```
 
 # neural net time!
