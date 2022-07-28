@@ -22,6 +22,8 @@ if (!require('pacman')) {
   install.packages('pacman')
 }
 pacman::p_load(tidyverse, data.table, glmnet, car, keras)
+
+SEED <- 420
 ```
 
 * [unemployment data](https://www.bls.gov/lau/)
@@ -32,8 +34,7 @@ pacman::p_load(tidyverse, data.table, glmnet, car, keras)
 note that the csv files we used were slightly modified to remove/include some useless/useful data
 
 ```{r initialization}
-data <- fread("final_data.csv")
-set.seed(420)
+data <- fread("data/final_data.csv")
 ```
 
 some variables are in absolutes, some are in percentages, don't know if this'll screw up the relations
@@ -94,7 +95,7 @@ here's the analysis for median income (per capita income is so closely related t
 ```{r}
 income_y <- data$median_household_income
 income_data <- inp_data
-set.seed(420)
+set.seed(SEED)
 cv_res_income <- cv.glmnet(as.matrix(income_data), income_y)
 plot(cv_res_income)
 ```
@@ -105,7 +106,7 @@ coef_income <- coef(cv_res_income, s = "lambda.1se")  #s=c("lambda.1se","lambda.
 coef_income <- coef_income[which(coef_income != 0),]  # get the non=zero coefficients
 good_vars <- names(coef_income)[-1]
 income_data <- income_data %>%
-  select(all_of(good_vars))
+        select(all_of(good_vars))
 ```
 
 and now we cut out all the bad coefficients and we're good to go do some `lm`ing!
@@ -121,13 +122,13 @@ summary(fit_income)
 ```
 now, we'll get rid of all statistically insignificant variables holding all else constant
 ```{r}
-fit_income <- lm(income ~ .-uninsured_age_under_6, data = income_data)
+fit_income <- lm(income ~ . - uninsured_age_under_6, data = income_data)
 summary(fit_income)
-fit_income <- lm(income ~ .-two_plus_races-uninsured_age_under_6, data = income_data)
+fit_income <- lm(income ~ . - two_plus_races - uninsured_age_under_6, data = income_data)
 summary(fit_income)
-fit_income <- lm(income ~ .-two_plus_races-native-uninsured_age_under_6, data = income_data)
+fit_income <- lm(income ~ . - two_plus_races - native - uninsured_age_under_6, data = income_data)
 summary(fit_income)
-fit_income <- lm(income ~ .-two_plus_races-native-uninsured_age_under_6-some_college, data = income_data)
+fit_income <- lm(income ~ . - two_plus_races - native - uninsured_age_under_6 - some_college, data = income_data)
 summary(fit_income)
 ```
 after trimming the awful variables, we now have our final list!
@@ -154,7 +155,7 @@ unemp_data <- inp_data %>%
 
 Y <- as.matrix(unemp_data[, 26])  # 26 is the column with all the outputs
 X <- as.matrix((unemp_data)[, -26])
-set.seed(420)
+set.seed(SEED)
 cv_res_ue <- cv.glmnet(X, Y, alpha = 1, nfolds = 10)
 plot(cv_res_ue)
 ```
@@ -212,7 +213,7 @@ pov_data <- inp_data %>%
 y <- as.matrix(data$poverty)
 X <- as.matrix(pov_data)[, -26]
 
-set.seed(420)
+set.seed(SEED)
 cv_res_pov <- cv.glmnet(X, y, alpha = 1)
 plot(cv_res_pov)
 coef_pov <- coef(cv_res_pov, s = "lambda.1se")  #s=c("lambda.1se","lambda.min") or lambda valu
@@ -226,7 +227,6 @@ good_vars <- names(coef_pov)[-1]
 total <- c("pov", good_vars)
 # get a subset with response and LASSO output
 pov_data <-  pov_data[, ..total]
-
 ```
 Now, we are ready to run lm with the updated pov_data from lasso
 ```{r}
@@ -235,11 +235,11 @@ summary(fit_pov)
 ```
 Now, we will get rid of all statistically insignificant variables holding all else constant through summary. 
 ```{r}
-fit_pov <- lm(pov ~ .-two_plus_races, pov_data)
+fit_pov <- lm(pov ~ . - two_plus_races, pov_data)
 summary(fit_pov)
-fit_pov <- lm(pov ~ .-two_plus_races-other_single_race, pov_data)
+fit_pov <- lm(pov ~ . - two_plus_races - other_single_race, pov_data)
 summary(fit_pov)
-fit_pov <- lm(pov ~ .-two_plus_races-other_single_race-pac_isl, pov_data)
+fit_pov <- lm(pov ~ . - two_plus_races - other_single_race - pac_isl, pov_data)
 summary(fit_pov)
 ```
 Now that our model looks good with no insignificant variables, let's update our pov_data and make a final model
@@ -262,7 +262,7 @@ plot(fit_pov)
 ```{r}
 crime_y <- data$crime_rate
 crime_data <- inp_data
-set.seed(420)
+set.seed(SEED)
 cv_res_crime <- cv.glmnet(as.matrix(crime_data), crime_y)
 plot(cv_res_crime)
 ```
@@ -285,7 +285,7 @@ summary(fit_crime)
 ```
 we can start removing variables now 
 ```{r}
-fit_crime <- lm(crime_rate ~ .-age_over_65, crime_data)
+fit_crime <- lm(crime_rate ~ . - age_over_65, crime_data)
 summary(fit_crime)
 ```
 Our model looks good, and everything else is significant. Let's get rid of the insignificant variables from our data set and make a final model. 
