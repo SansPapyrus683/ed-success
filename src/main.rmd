@@ -308,9 +308,9 @@ BATCH_SIZE <- 512
 train_size <- floor(nrow(inp_data) * 0.7)
 train_inds <- sample(nrow(inp_data), train_size)
 
-train_X <- inp_data[train_inds,]
-test_X <- inp_data[-train_inds,]
-inp_len <- length(train_X)
+train_X <- as.matrix(inp_data[train_inds,])
+test_X <- as.matrix(inp_data[-train_inds,])
+inp_len <- dim(train_X)[2]
 ```
 
 ## unemployment
@@ -331,10 +331,15 @@ ue_model %>% compile(
         loss = "mse"
 )
 
-ue_model %>% fit(
+ue_fit <- ue_model %>% fit(
         train_X, train_y,
         epochs = EPOCHS,
         validation_split = VAL_SPLIT,
         batch_size = BATCH_SIZE
 )
+plot(ue_fit)
+```
+
+```{r}
+ue_model %>% evaluate(test_X, test_y)
 ```
