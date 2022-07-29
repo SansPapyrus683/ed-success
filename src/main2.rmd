@@ -1,0 +1,372 @@
+---
+title: "Final Project"
+authors:
+- Kevin Sheng
+- Arushi Agarwal
+- Peter Kim
+- Nathan Dang
+output:
+  html_notebook:
+    code_folding: show
+    highlight: haddock
+    theme: lumen
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = T, fig.width = 6, fig.height = 3)
+options(scipen = 10, digits = 3)  # controls base R output
+if (!require('pacman')) {
+  install.packages('pacman')
+}
+pacman::p_load(tidyverse, data.table, glmnet, car, keras)
+
+SEED <- 420
+```
+
+* [unemployment data](https://www.bls.gov/lau/)
+* [basically everything else](https://www.openintro.org/data/index.php?data=county_complete)
+* [crime data](https://ucr.fbi.gov/crime-in-the-u.s/2017/crime-in-the-u.s.-2017)
+* [FIPS table & stuff](https://github.com/kjhealy/fips-codes/blob/master/state_and_county_fips_master.csv)
+
+note that the csv files we used were slightly modified to remove/include some useless/useful data
+
+```{r initialization}
+data <- fread("final_data.csv")
+needed <- data %>% select (
+  # VARS OF INTEREST
+  hs_grad, some_college, bachelors,  # education stats
+
+  # CONTROLS
+  pop,  # population
+  # demographics (races)
+  black, native, asian, pac_isl, hispanic,
+  white_not_hispanic, other_single_race, two_plus_races,
+  # demographics (age)
+  age_under_5, age_over_65, median_age,
+  women_16_to_50_birth_rate,  # birth rate
+  veterans,  # veteran % of pop
+  computer,  # % w/ access to computer
+  households, persons_per_household,  # pretty obvious
+  # % of population that's uninsured & whatever
+  uninsured, uninsured_age_under_6, uninsured_age_under_19, uninsured_age_over_74,
+  civilian_labor_force,  # size of labor force
+  unemployment_rate, poverty, median_household_income, crime_rate
+)
+set.seed(420)
+n <- nrow(needed)
+trainingindexes <- sample(n, 2102)
+data_train <- needed[trainingindexes, ]
+inp_data <- data_train %>% select(-c(unemployment_rate,poverty,median_household_income,crime_rate))
+data_test <- needed[-trainingindexes, ]
+data_val <- data_test[1:10,]
+data_test <- data_test[-c(1,2,3,4,5,6,7,8,9,10),]
+
+```
+
+some variables are in absolutes, some are in percentages, don't know if this'll screw up the relations
+
+* output variables (for each county):
+  * crimes per 100k ppl (`violent_crime_rate` & `property_crime_rate`)
+  * unemployment (`unemployment_rate`)
+  * med. income/per capita income, who knows (`median_household_income` or `per_capita_income`)
+  * poverty rate (`poverty`)
+* interesting input variables
+  * high school graduate % (`hs_grad`)
+  * some college education % (`some_college`)
+  * at least bachelor's % (`bachelors`)
+* control input variables (yeah there's a lot of them):
+  * population (`pop`)
+  * demographics
+    * race (`black`, `native`, etc.)
+    * age ranges (`age_under_5`, `age_over_65`, etc.)
+  * birth rate (`women_16_to_50_birth_rate`)
+  * veteran % (`veterans`)
+  * ~~broadband~~ and computer access (~~`broadband`~~ and `computer` respectively)
+  * household information (`households`, `persons_per_household`)
+  * insurance statistics (`uninsured`, `uninsured_age_under_6`, etc.)
+  * number of ppl in the labor force (`civilian_labor_force`)
+
+eda is [here](eda.rmd)
+
+so let's get started!
+
+
+# median income
+
+here's the analysis for median income (per capita income is so closely related that i'm just gonna lump it in with this)
+
+## lasso selection
+
+```{r}
+income_y <- data_train$median_household_income
+income_data <- inp_data
+set.seed(SEED)
+cv_res_income <- cv.glmnet(as.matrix(income_data), income_y)
+plot(cv_res_income)
+```
+
+here are the coefficients that lasso thought were alright
+```{r incomelasso}
+coef_income <- coef(cv_res_income, s = "lambda.1se")  #s=c("lambda.1se","lambda.min") or lambda value
+coef_income <- coef_income[which(coef_income != 0),]  # get the non=zero coefficients
+good_vars <- names(coef_income)[-1]
+income_data <- income_data %>%
+        select(all_of(good_vars))
+```
+
+and now we cut out all the bad coefficients and we're good to go do some `lm`ing!
+
+## actual linreg & significance
+
+time for some significance checking \
+note that the threshold for a significant variable in our book is 5%
+```{r}
+income_data$income <- data_train$median_household_income
+fit_income <- lm(income ~ ., data = income_data)
+summary(fit_income)
+```
+now, we'll get rid of all statistically insignificant variables holding all else constant
+```{r}
+fit_income <- lm(income ~ . - black, data = income_data)
+summary(fit_income)
+fit_income <- lm(income ~ . - two_plus_races - black, data = income_data)
+summary(fit_income)
+fit_income <- lm(income ~ . - two_plus_races - black - uninsured_age_under_6, data = income_data)
+summary(fit_income)
+fit_income <- lm(income ~ . - two_plus_races - black - uninsured_age_under_6 - native, data = income_data)
+summary(fit_income)
+```
+after trimming the awful variables, we now have our final list!
+```{r}
+bad <- c('two_plus_races',
+         'black',
+         'uninsured_age_under_6',
+         'native')
+income_data <- income_data %>%
+  select(-all_of(bad))
+fit_income <- lm(income ~ ., data = income_data)
+summary(fit_income)
+plot(fit_income)
+```
+
+
+# unemployment
+
+## lasso selection
+
+yeah, basically do the same stuff as before
+```{r}
+unemp_data <- inp_data %>%
+  mutate(rate = data_train$unemployment_rate)
+
+Y <- as.matrix(unemp_data[, 26])  # 26 is the column with all the outputs
+X <- as.matrix((unemp_data)[, -26])
+set.seed(SEED)
+cv_res_ue <- cv.glmnet(X, Y, alpha = 1, nfolds = 10)
+plot(cv_res_ue)
+```
+
+this time the lasso got rid of a lot more variables than before, that's kinda good i guess
+```{r}
+coef_ue <- coef(cv_res_ue, s = "lambda.1se")  #s=c("lambda.1se","lambda.min") or lambda valu
+coef(cv_res_ue, s="lambda.1se")
+coef_ue <- coef_ue[which(coef_ue != 0),]  # get the non=zero coefficients
+good_vars <- names(coef_ue)[-1]
+unemp_data <- unemp_data %>%
+  select(all_of(good_vars))
+unemp_data <- unemp_data %>%
+  mutate(rate = data_train$unemployment_rate)
+```
+
+## linreg & significance
+
+damn, it seems `some_college` didn't make the cut this time as well, i wonder why that is. Now we'll use summary() to get rid of all statistically insignificant variables, holding all else constant, as we use lm()
+```{r}
+fit_ue1 <- lm(rate ~ .,unemp_data)
+summary(fit_ue1)
+```
+
+This works as our final model, now that we have gotten rid of statistically insignificant variables. 
+
+Here's the final fit with all the definitely significant variables labeled as fit_ue2
+```{r}
+fit_ue2 <- lm(
+        rate ~ .,
+        unemp_data
+)
+summary(fit_ue2)
+plot(fit_ue2)
+```
+
+For unemployment only, we will be testing our model with our testing data. We will use this to determine our error. 
+
+```{r}
+set.seed(420)
+predvals <- predict(fit_ue2, data_test)
+rmse <- sqrt(mean((data_test$unemployment_rate - predvals)^2))
+rmse
+
+```
+Our root mean square error is 1.32, which is lower than that of our Neural Network. This means that this is a better model, so we will use this to predict the unemployment rates for our validation data. 
+
+```{r}
+set.seed(420)
+predvals <- predict(fit_ue2, data_val)
+validation <- data.frame(predvals, data_val$unemployment_rate)
+validation
+```
+As you can see, although it's not exact, our model is pretty close and can predict unemployment rates. 
+
+# poverty rate
+
+again, input preparation (kinda repetitive ngl)
+```{r}
+pov_data <- inp_data %>%
+        mutate(pov = data_train$poverty)
+```
+
+## lasso selection
+
+```{r}
+y <- as.matrix(data_train$poverty)
+X <- as.matrix(pov_data)[, -26]
+
+set.seed(SEED)
+cv_res_pov <- cv.glmnet(X, y, alpha = 1)
+plot(cv_res_pov)
+coef_pov <- coef(cv_res_pov, s = "lambda.1se")  #s=c("lambda.1se","lambda.min") or lambda valu
+coef_pov <- coef_pov[which(coef_pov != 0),]  # get the non=zero coefficients
+good_vars <- names(coef_pov)[-1]
+```
+
+## linreg & significance
+
+```{r}
+total <- c("pov", good_vars)
+# get a subset with response and LASSO output
+pov_data <-  pov_data[, ..total]
+```
+Now, we are ready to run lm with the updated pov_data from lasso
+```{r}
+fit_pov <- lm(pov ~ ., pov_data)
+summary(fit_pov)
+```
+Now, we will get rid of all statistically insignificant variables holding all else constant through summary. 
+```{r}
+fit_pov <- lm(pov ~ . - other_single_race, pov_data)
+summary(fit_pov)
+fit_pov <- lm(pov ~ . - two_plus_races - other_single_race, pov_data)
+summary(fit_pov)
+fit_pov <- lm(pov ~ . - two_plus_races - other_single_race - asian, pov_data)
+summary(fit_pov)
+fit_pov <- lm(pov ~ . - two_plus_races - other_single_race - asian - uninsured_age_over_74, pov_data)
+summary(fit_pov)
+```
+Now that our model looks good with no insignificant variables, let's update our pov_data and make a final model
+```{r}
+bad <- c("two_plus_races",
+         "other_single_race",
+         "asian", 
+         "uninsured_age_over_74")
+pov_data <- pov_data %>%
+        select(-all_of(bad))
+
+fit_pov <- lm(pov ~ ., pov_data)
+summary(fit_pov)
+plot(fit_pov)
+```
+
+# crime rate
+
+## lasso selection
+
+```{r}
+crime_y <- data_train$crime_rate
+crime_data <- inp_data
+set.seed(SEED)
+cv_res_crime <- cv.glmnet(as.matrix(crime_data), crime_y)
+plot(cv_res_crime)
+```
+
+```{r}
+crime_coefs <- coef(cv_res_crime, s = "lambda.1se")
+crime_coefs <- crime_coefs[which(crime_coefs != 0),]
+
+crime_coefs <- c("crime_rate", names(crime_coefs)[-1])
+crime_data <- data[, ..crime_coefs]
+```
+
+## linreg & significance
+
+
+Now that we have updated the data to only contain lasso significant variables, we can make our model
+```{r}
+fit_crime <- lm(crime_rate ~ ., crime_data)
+summary(fit_crime)
+```
+we can start removing variables now 
+```{r}
+fit_crime <- lm(crime_rate ~ . - hs_grad, crime_data)
+summary(fit_crime)
+```
+Our model looks good, and everything else is significant. Let's get rid of the insignificant variables from our data set and make a final model. 
+```{r}
+bad <- "hs_grad"
+crime_data <- crime_data %>%
+        select(-all_of(bad))
+
+fit_crime <- lm(crime_rate ~ ., crime_data)
+summary(fit_crime)
+plot(fit_crime)
+```
+
+# neural net time!
+
+```{r}
+#install some stuff
+install.packages("keras")
+library(keras)
+```
+
+here we set up some basic stuff and define some constants for the training as well
+```{r}
+EPOCHS <- 40
+VAL_SPLIT <- .15
+BATCH_SIZE <- 512
+train_size <- floor(nrow(inp_data) * 0.7)
+train_inds <- sample(nrow(inp_data), train_size)
+train_X <- as.matrix(inp_data[train_inds,])
+test_X <- as.matrix(inp_data[-train_inds,])
+inp_len <- dim(train_X)[2]
+```
+
+## unemployment
+
+```{r}
+train_y <- data$unemployment_rate[train_inds]
+test_y <- data$unemployment_rate[-train_inds]
+ue_model <- keras_model_sequential() %>%
+        layer_dense(units = 16, activation ="relu", input_shape = inp_len) %>%
+        layer_dense(units = 8, activation="relu") %>%
+        layer_dense(units = 4, activation="relu") %>%
+        layer_dense(units = 3, activation="relu") %>%
+        layer_dense(units = 1)
+ue_model %>% compile(
+        optimizer = "rmsprop",
+        loss = "mse"
+)
+ue_fit <- ue_model %>% fit(
+        train_X, train_y,
+        epochs = EPOCHS,
+        validation_split = VAL_SPLIT,
+        batch_size = BATCH_SIZE
+)
+plot(ue_fit)
+```
+
+```{r}
+ue_model %>% evaluate(test_X, test_y)
+```
