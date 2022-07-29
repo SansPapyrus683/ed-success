@@ -33,7 +33,7 @@ SEED <- 420
 Note that the CSV files used were slightly modified to exclude irrelevant data.
 
 ```{r initialization}
-data <- fread("data/final_data.csv")
+data <- fread("../data/final_data.csv")
 
 response <- c('unemployment_rate', 'crime_rate', 'median_household_income', 'poverty')
 needed <- data %>% select(
